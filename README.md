@@ -1,6 +1,6 @@
 # Hangman Game
 
-This is a simple hangman game implemented in C++. The game randomly selects a word from a list of 1378 words and the player's job is to guess the word by entering a letter. The player has 10 tries to guess the word correctly. Guessing a wrong vowel (a, e, u, i, o) will not affect the number of tries the player has.
+This is a simple hangman game implemented in C++. The game randomly selects a word from a list of 1378 (I will change that in the future, currently just messing around with C++) words and the player's job is to guess the word by entering a letter. The player has 10 tries to guess the word correctly. Guessing a wrong vowel (a, e, u, i, o) will not affect the number of tries the player has.
 
 ## How to Play
 
