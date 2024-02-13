@@ -142,9 +142,9 @@ int main() {
   
   std::cout << "Perfect! let's start, shall we?" << std::endl;
   // game init:
-  std::string input; // player's guess
-  std::set<char> usedChars;
-  std::vector<std::tuple<std::string, bool, std::string, int>> finalProgress = {};
+  std::string input; // player's guess gets stored here
+  std::set<char> usedChars; // guessed chars per round gets stored here
+  std::vector<std::tuple<std::string, bool, std::string, int>> finalProgress = {}; // stats of all rounds gets stored here
   
   
   while (round <= rounds) {
