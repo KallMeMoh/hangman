@@ -203,6 +203,7 @@ int main() {
 
     // lose case
     if (health <= 0) {
+      std::cout << "Sorry! you lost this round, the word was: " << randWord << std::endl;
       finalProgress.push_back(make_tuple(randWord, false, progress, health));
       round++;
     }
