@@ -7,7 +7,9 @@
 #include <cstdlib>
 #include <ctime>
 
-std::string words[1378] = {
+const int WORD_COUNT = 1378;
+const int MAX_HEALTH = 10;
+const std::string words[WORD_COUNT] = {
   "ability", "absence", "academy", "account", "accuse", "achieve", "acquire", "address", "adjust", "admit", "advance", "advice", "affect", "afford", 
   "against", "agency", "aircraft", "allege", "allow", "almost", "already", "alter", "always", "amazing", "amount", "ancient", "anger", "animal", 
   "announce", "annual", "answer", "anxiety", "apology", "appeal", "appoint", "approve", "argue", "arrival", "article", "artist", "ashamed", "aspect", 
@@ -106,23 +108,23 @@ std::string words[1378] = {
 };
 
 // functions
-std::tuple<std::string, std::string> doMagic(std::string word, char letter, std::string progress) {
-  std::string visualRep = "", result = progress;
+std::string updateProgress(const std::string& word, const char& letter, std::string& progress) {
+  std::string visualRep = "";
 
-  if (result.length() <= 0) {
-    for (auto &&i : word) {
-      result += "_";
+  if (progress.empty()) {
+    for (auto& c : word) {
+      progress += "_";
     }
   }
 
   for (int i = 0; i < word.length(); i++) {
     if (word[i] == letter) {
-      result[i] = letter;
+      progress[i] = letter;
     }
-    visualRep += (std::string(1, result[i]) + " ");
+    visualRep += (std::string(1, progress[i]) + " ");
   }
 
-  return make_tuple(visualRep, result);
+  return visualRep;
 }
 
 
@@ -132,7 +134,7 @@ int main() {
   std::cout << "However you only got 10 tries before you get hanged- on the bright side..." << std::endl;
   std::cout << "guessing a wrong vowel (a, e, u, i, o) will not affect the number of tries you got" << std::endl;
   std::cout << "Now that you know how to play... How many rounds would you like to play?" << std::endl;
-  int health = 10, round = 1, rounds = 0;
+  int health = MAX_HEALTH, round = 1, rounds = 0;
   
   std::cin >> rounds;
   while (1 > rounds || rounds > 10) {
@@ -146,27 +148,24 @@ int main() {
   std::set<char> usedChars; // guessed chars per round gets stored here
   std::vector<std::tuple<std::string, bool, std::string, int>> finalProgress = {}; // stats of all rounds gets stored here
   
+  srand(time(0)); // seed the random number generator
   
   while (round <= rounds) {
     // reseting player's states && round re-init:
-    health = 10; // health reset
+    health = MAX_HEALTH; // health reset
     input = ""; // guess reset
     usedChars.clear(); // used chars reset
     std::string progress = ""; // player's progress 
-    srand(time(0)); // seed the random number generator with the current time
-    int randomIndex = rand() % 1378; // get a random number between 0 and 1377
+    int randomIndex = rand() % WORD_COUNT; // get a random number between 0 and 1377
     std::string randWord = words[randomIndex]; // get the word at the random index
 
     while (health > 0) {
-      std::tuple<std::string, std::string> magic = doMagic(randWord, '_', progress);
-      std::string visualRep = std::get<0>(magic);
-      std::string result = std::get<1>(magic);
-      progress = result;
+      std::string visualRep = updateProgress(randWord, '_', progress);
 
-      std::cout << "round: " << round << "/" << rounds << " | Health: " << health << "/10 | " << "start guessing!" << std::endl;
+      std::cout << "round: " << round << "/" << rounds << " | Health: " << health << "/" << MAX_HEALTH << " | start guessing!" << std::endl;
       std::cout << visualRep << std::endl;
       
-      // is input a 1 char string?
+      // is input string 1 char long?
       std::cin >> input;
       if (input.length() > 1) {
         std::cout << "only one letter at a time tough guy!" << std::endl;
@@ -174,35 +173,31 @@ int main() {
       }
       
       // was the letter used before?
-      if (usedChars.find(input[0]) != usedChars.end()) { // If input is in the set
+      if (usedChars.find(input[0]) != usedChars.end()) { // yes
         std::cout << "you tried letter " << input << " before!" << std::endl;
         continue;
-      } else {
+      } else { // no
         usedChars.insert(input[0]);
       }
 
-      // is player's input correct (included in the randomly generated word)?
-      if (randWord.find(input) != std::string::npos) {
-        // char found
-        std::tuple<std::string, std::string> magic = doMagic(randWord, input[0], progress);
-        std::string visualRep = std::get<0>(magic);
-        std::string result = std::get<1>(magic);
+      // was player's input included in the randomly generated word?
+      if (randWord.find(input[0]) != std::string::npos) { // yes, char found
+        std::string visualRep = updateProgress(randWord, input[0], progress);
         
-        if (result == randWord) { // won the round
+        if (progress == randWord) { // won the round
+          std::cout << "Congratulations! you guessed the word: " << randWord << std::endl;
           finalProgress.push_back(make_tuple(randWord, true, randWord, health));
           round++;
-          break;
+          break; // onto the next round
         }
-        progress = result;
-      } else  { // incorrect guess
-        std::cout << "Nope! (" << input << ") was an incorrect guess." << std::endl;
+      } else  { // no, incorrect guess
+        std::cout << "Nope! (" << input[0] << ") was an incorrect guess." << std::endl;
         // was the input a vowel?
         std::string vowels = "aeiou";
-        bool isVowel = vowels.find(input) != std::string::npos;
+        bool isNotVowel = vowels.find(input[0]) == std::string::npos;
 
-        if (!isVowel) {
+        if (isNotVowel) 
           health--;
-        }
       }
     }
 
@@ -213,20 +208,18 @@ int main() {
     }
   }
 
-  if (round > rounds) {
-    std::cout << "Alright! all " << rounds << " rounds are over, let's check how you did:" << std::endl;
-    int counter = 1;
-    for (auto& t : finalProgress) {
-      std::string randomWord = std::get<0>(t);
-      bool solved = std::get<1>(t);
-      std::string playerGuess = std::get<2>(t);
-      int playerHealth = std::get<3>(t);
+  std::cout << "Alright! all " << rounds << " rounds are over, let's check how you did:" << std::endl;
+  int counter = 1;
+  for (auto& game : finalProgress) {
+    std::string randomWord = std::get<0>(game);
+    bool solved = std::get<1>(game);
+    std::string playerGuess = std::get<2>(game);
+    int playerHealth = std::get<3>(game);
 
-      std::cout << "==================== round " << counter++ << " ==========" << (solved ? " solved " : "========") << "==" << std::endl;
-      std::cout << "= The word you had to guess: " << randomWord << std::endl;
-      std::cout << "= What you guessed: " << playerGuess << std::endl;
-      std::cout << "= Times you guessed wrong: " << (10 - playerHealth) << std::endl;
-    }
+    std::cout << "==================== round " << counter++ << " ==========" << (solved ? " solved ==" : "==========") << std::endl;
+    std::cout << "= The word you had to guess: " << randomWord << std::endl;
+    std::cout << "= What you guessed: " << playerGuess << std::endl;
+    std::cout << "= Times you guessed wrong: " << (MAX_HEALTH - playerHealth) << std::endl;
   }
   
   std::cout << "=================================================" << std::endl;
