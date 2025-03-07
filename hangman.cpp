@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <tuple>
 #include <string>
 #include <algorithm>
 #include <set>
@@ -107,15 +106,15 @@ const std::string words[WORD_COUNT] = {
   "write", "wrong", "yellow", "young", "youth", "zebra"
 };
 
-// functions
+struct GameResult {
+  std::string word;
+  bool solved;
+  std::string playerGuess;
+  int health;
+};
+
 std::string updateProgress(const std::string& word, const char& letter, std::string& progress) {
   std::string visualRep = "";
-
-  if (progress.empty()) {
-    for (auto& c : word) {
-      progress += "_";
-    }
-  }
 
   for (int i = 0; i < word.length(); i++) {
     if (word[i] == letter) {
@@ -130,7 +129,7 @@ std::string updateProgress(const std::string& word, const char& letter, std::str
 
 int main() {
   std::cout << "Welcome to Hangman!" << std::endl;
-  std::cout << "I will pick a random word and your job is to guess that word by entring a letter" << std::endl;
+  std::cout << "I will pick a random word and your job is to guess that word by entering a letter" << std::endl;
   std::cout << "However you only got 10 tries before you get hanged- on the bright side..." << std::endl;
   std::cout << "guessing a wrong vowel (a, e, u, i, o) will not affect the number of tries you got" << std::endl;
   std::cout << "Now that you know how to play... How many rounds would you like to play?" << std::endl;
@@ -146,7 +145,7 @@ int main() {
   // game init:
   std::string input; // player's guess gets stored here
   std::set<char> usedChars; // guessed chars per round gets stored here
-  std::vector<std::tuple<std::string, bool, std::string, int>> finalProgress = {}; // stats of all rounds gets stored here
+  std::vector<GameResult> finalProgress = {}; // stats of all rounds gets stored here
   
   srand(time(0)); // seed the random number generator
   
@@ -155,9 +154,9 @@ int main() {
     health = MAX_HEALTH; // health reset
     input = ""; // guess reset
     usedChars.clear(); // used chars reset
-    std::string progress = ""; // player's progress 
     int randomIndex = rand() % WORD_COUNT; // get a random number between 0 and 1377
     std::string randWord = words[randomIndex]; // get the word at the random index
+    std::string progress(randWord.length(), '_'); // initialize progress with underscores
 
     while (health > 0) {
       std::string visualRep = updateProgress(randWord, '_', progress);
@@ -186,7 +185,7 @@ int main() {
         
         if (progress == randWord) { // won the round
           std::cout << "Congratulations! you guessed the word: " << randWord << std::endl;
-          finalProgress.push_back(make_tuple(randWord, true, randWord, health));
+          finalProgress.push_back({randWord, true, randWord, health});
           round++;
           break; // onto the next round
         }
@@ -204,7 +203,7 @@ int main() {
     // lose case
     if (health <= 0) {
       std::cout << "Sorry! you lost this round, the word was: " << randWord << std::endl;
-      finalProgress.push_back(make_tuple(randWord, false, progress, health));
+      finalProgress.push_back({randWord, false, progress, health});
       round++;
     }
   }
@@ -212,15 +211,10 @@ int main() {
   std::cout << "Alright! all " << rounds << " rounds are over, let's check how you did:" << std::endl;
   int counter = 1;
   for (auto& game : finalProgress) {
-    std::string randomWord = std::get<0>(game);
-    bool solved = std::get<1>(game);
-    std::string playerGuess = std::get<2>(game);
-    int playerHealth = std::get<3>(game);
-
-    std::cout << "==================== round " << counter++ << " ==========" << (solved ? " solved ==" : "==========") << std::endl;
-    std::cout << "= The word you had to guess: " << randomWord << std::endl;
-    std::cout << "= What you guessed: " << playerGuess << std::endl;
-    std::cout << "= Times you guessed wrong: " << (MAX_HEALTH - playerHealth) << std::endl;
+    std::cout << "==================== round " << counter++ << " ==========" << (game.solved ? " solved ==" : "==========") << std::endl;
+    std::cout << "= The word you had to guess: " << game.word << std::endl;
+    std::cout << "= What you guessed: " << game.playerGuess << std::endl;
+    std::cout << "= Times you guessed wrong: " << (MAX_HEALTH - game.health) << std::endl;
   }
   
   std::cout << "=================================================" << std::endl;
